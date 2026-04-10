@@ -650,3 +650,7 @@ void MR_PrintCacheStats(void)
         return false;
     }
 #endif
+uint8_t gLnaGain  = 2;  // default index 2 = -14dB
+uint8_t gLnaSGain = 3;  // default index 3 = 0dB
+
+uint8_t gUpconverter = 0;  // 0=OFF, 1=100MHz, 2=125MHz

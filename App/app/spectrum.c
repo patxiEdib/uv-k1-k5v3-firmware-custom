@@ -51,6 +51,7 @@ static uint32_t initialFreq;
 static char String[32];
 
 static bool isInitialized = false;
+static bool gainMenuMode  = false;  // true when entered via APP_RunGainMenu
 bool isListening = true;
 bool monitorMode = false;
 bool redrawStatus = true;
@@ -518,7 +519,9 @@ static void ToggleRX(bool on)
     }
     else
     {
-        BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+        // In STILL mode keep listen BW to avoid audio glitches when signal drops
+        if (currentState != STILL)
+            BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     }
 }
 
@@ -1360,6 +1363,10 @@ void OnKeyDownStill(KEY_Code_t key)
     case KEY_EXIT:
         if (!menuState)
         {
+            if (gainMenuMode) {
+                DeInitSpectrum();
+                break;
+            }
             SetState(SPECTRUM);
             lockAGC = false;
             monitorMode = false;
@@ -1667,7 +1674,8 @@ static void Tick()
     {
         gNextTimeslice = false;
 #ifdef ENABLE_AM_FIX
-        if (settings.modulationType == MODULATION_AM && !lockAGC)
+        if (settings.modulationType == MODULATION_AM && !lockAGC
+            && gSetting_AM_fix && currentState != STILL)
         {
             AM_fix_10ms(vfo); // allow AM_Fix to apply its AGC action
         }
@@ -1805,6 +1813,78 @@ void APP_RunSpectrum()
     {
         Tick();
     }
+
+    BACKLIGHT_TurnOn();
+}
+
+void APP_RunGainMenu()
+{
+    settings.backlightState = gEeprom.BACKLIGHT_TIME == 0 ? false : true;
+
+    vfo = gEeprom.TX_VFO;
+
+    currentFreq = initialFreq = gTxVfo->pRX->Frequency;
+
+    BackupRegisters();
+
+    isListening   = true;
+    redrawStatus  = true;
+    redrawScreen  = true;
+    newScanStart  = false;
+    menuState     = 1;
+    gainMenuMode  = true;
+
+    // Wait for keys to be released before entering (F+MENU still pressed)
+    while (KEYBOARD_GetKey() != KEY_INVALID)
+        SYSTEM_DelayMs(10);
+
+    ToggleRX(true), ToggleRX(false);
+    RADIO_SetModulation(settings.modulationType = gTxVfo->Modulation);
+
+#ifdef ENABLE_FEAT_F4HWN_SPECTRUM
+    BK4819_SetFilterBandwidth(settings.listenBw, false);
+#else
+    BK4819_SetFilterBandwidth(settings.listenBw = BK4819_FILTER_BW_WIDE, false);
+#endif
+
+    SetF(currentFreq);
+    SetState(STILL);
+
+    isInitialized = true;
+
+    while (isInitialized)
+    {
+        Tick();
+    }
+
+    // Save LNA/LNAS values so radio.c reapplies them after InitAGC
+    {
+        uint16_t reg = BK4819_ReadRegister(BK4819_REG_13);
+        gLnaGain  = (reg >> 5) & 0x7;
+        gLnaSGain = (reg >> 8) & 0x3;
+    }
+
+    gainMenuMode = false;
+
+    // Wait for EXIT key to be released so the main system doesn't see it
+    while (KEYBOARD_GetKey() != KEY_INVALID)
+        SYSTEM_DelayMs(10);
+
+    // Reset app.c keyboard state so it doesn't process the EXIT as a new event
+    gKeyReading0     = KEY_INVALID;
+    gKeyReading1     = KEY_INVALID;
+    gDebounceCounter = 0;
+    gKeyBeingHeld    = false;
+
+    // In AM mode, don't restore registers so the gain values persist
+    if (gTxVfo->Modulation != MODULATION_AM)
+    {
+        RestoreRegisters();
+    }
+
+#ifdef ENABLE_AM_FIX
+    AM_fix_enable(false);
+#endif
 
     BACKLIGHT_TurnOn();
 }

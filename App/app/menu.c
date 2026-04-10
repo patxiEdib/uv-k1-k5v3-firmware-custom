@@ -119,6 +119,10 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = 9;
             break;
 
+        case MENU_UPCONV:
+            *pMax = 2;
+            break;
+
         case MENU_STEP:
             //*pMin = 0;
             *pMax = STEP_N_ELEM - 1;
@@ -247,9 +251,7 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
         case MENU_500TX:
 #endif
         case MENU_350EN:
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
-#endif
 #ifdef ENABLE_FEAT_F4HWN
         case MENU_SET_TMR:
         case MENU_S_PRI:
@@ -262,12 +264,10 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             *pMax = ARRAY_SIZE(gModulationStr) - 1;
             break;
 
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
             //*pMin = 0;
             *pMax = ARRAY_SIZE(gSubMenu_SCRAMBLER) - 1;
             break;
-#endif
 
         case MENU_AUTOLK:
             *pMax = 40;
@@ -490,6 +490,11 @@ void MENU_AcceptSetting(void)
             #endif
             break;
 
+        case MENU_UPCONV:
+            gUpconverter = (uint8_t)gSubMenuSelection;
+            gUpdateDisplay = true;
+            break;
+
         case MENU_STEP:
             gTxVfo->STEP_SETTING = FREQUENCY_GetStepIdxFromSortedIdx(gSubMenuSelection);
             if (IS_FREQ_CHANNEL(gTxVfo->CHANNEL_SAVE))
@@ -562,7 +567,6 @@ void MENU_AcceptSetting(void)
             gRequestSaveChannel       = 1;
             return;
 
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
             gTxVfo->SCRAMBLING_TYPE = gSubMenuSelection;
             #if 0
@@ -573,7 +577,6 @@ void MENU_AcceptSetting(void)
             #endif
             gRequestSaveChannel     = 1;
             return;
-#endif
 
         case MENU_BCL:
             gTxVfo->BUSY_CHANNEL_LOCK = gSubMenuSelection;
@@ -880,12 +883,10 @@ void MENU_AcceptSetting(void)
             gVfoConfigureMode    = VFO_CONFIGURE_RELOAD;
             gFlagResetVfos       = true;
             break;
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSetting_ScrambleEnable = gSubMenuSelection;
             gFlagReconfigureVfos    = true;
             break;
-#endif
 
         #ifdef ENABLE_F_CAL_MENU
             case MENU_F_CALI:
@@ -1030,6 +1031,10 @@ void MENU_ShowCurrentSetting(void)
             gSubMenuSelection = gEeprom.SQUELCH_LEVEL;
             break;
 
+        case MENU_UPCONV:
+            gSubMenuSelection = gUpconverter;
+            break;
+
         case MENU_STEP:
             gSubMenuSelection = FREQUENCY_GetSortedIdxFromStepIdx(gTxVfo->STEP_SETTING);
             break;
@@ -1105,11 +1110,9 @@ void MENU_ShowCurrentSetting(void)
             gSubMenuSelection = gTxVfo->CHANNEL_BANDWIDTH;
             break;
 
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
             gSubMenuSelection = gTxVfo->SCRAMBLING_TYPE;
             break;
-#endif
 
         case MENU_BCL:
             gSubMenuSelection = gTxVfo->BUSY_CHANNEL_LOCK;
@@ -1342,11 +1345,9 @@ void MENU_ShowCurrentSetting(void)
             gSubMenuSelection = gSetting_350EN;
             break;
 
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
             gSubMenuSelection = gSetting_ScrambleEnable;
             break;
-#endif
 
         #ifdef ENABLE_F_CAL_MENU
             case MENU_F_CALI:

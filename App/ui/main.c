@@ -850,6 +850,13 @@ void UI_DisplayMain(void)
 
         uint32_t frequency = gEeprom.VfoInfo[vfo_num].pRX->Frequency;
 
+        // Upconverter display offset: subtract converter frequency from display only
+        if (gUpconverter > 0) {
+            const uint32_t upconv_offset = (gUpconverter == 1) ? 10000000u : 12500000u;
+            if (frequency >= upconv_offset)
+                frequency -= upconv_offset;
+        }
+
         if(TX_freq_check(frequency) != 0 && gEeprom.VfoInfo[vfo_num].TX_LOCK == true && !FUNCTION_IsRx())
         {
             if(isMainOnly())

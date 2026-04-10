@@ -754,6 +754,16 @@ static void MAIN_Key_MENU(bool bKeyPressed, bool bKeyHeld)
     if (bKeyPressed && !bKeyHeld) // menu key pressed
         gBeepToPlay = BEEP_1KHZ_60MS_OPTIONAL;
 
+    // F + MENU (short press): open gain menu
+    if (bKeyPressed && !bKeyHeld && gWasFKeyPressed) {
+        #ifdef ENABLE_SPECTRUM
+            gWasFKeyPressed = false;
+            APP_RunGainMenu();
+            gRequestDisplayScreen = DISPLAY_MAIN;
+        #endif
+        return;
+    }
+
     if (bKeyHeld) { // menu key held down (long press)
         if (bKeyPressed) { // long press MENU key
 

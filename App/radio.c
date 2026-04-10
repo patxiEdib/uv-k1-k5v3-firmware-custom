@@ -381,13 +381,9 @@ void RADIO_ConfigureChannel(const unsigned int VFO, const unsigned int configure
         pVfo->StepFrequency = gStepFrequencyTable[tmp];
 
         tmp = data[7];
-#ifndef ENABLE_FEAT_F4HWN
         if (tmp > (ARRAY_SIZE(gSubMenu_SCRAMBLER) - 1))
             tmp = 0;
         pVfo->SCRAMBLING_TYPE = tmp;
-#else
-        pVfo->SCRAMBLING_TYPE = 0;
-#endif
 
         pVfo->freq_config_RX.CodeType = (data[2] >> 0) & 0x0F;
         pVfo->freq_config_TX.CodeType = (data[2] >> 4) & 0x0F;
@@ -789,7 +785,19 @@ void RADIO_SetupRegisters(bool switchToForeground)
     BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2_GREEN, false);
 
     if (gRxVfo->Modulation == MODULATION_AM)
-        BK4819_SetFilterBandwidth(BK4819_FILTER_BW_AM, true);
+    {
+        switch (Bandwidth)
+        {
+            default:
+                Bandwidth = BK4819_FILTER_BW_WIDE;
+                [[fallthrough]];
+            case BK4819_FILTER_BW_WIDE:
+            case BK4819_FILTER_BW_NARROW:
+            case BK4819_FILTER_BW_NARROWER:
+                BK4819_SetFilterBandwidth(Bandwidth, true);
+                break;
+        }
+    }
     else
     {
         switch (Bandwidth)
@@ -801,7 +809,6 @@ void RADIO_SetupRegisters(bool switchToForeground)
             case BK4819_FILTER_BW_NARROW:
             case BK4819_FILTER_BW_NARROWER:
                 #ifdef ENABLE_AM_FIX
-    //              BK4819_SetFilterBandwidth(Bandwidth, gRxVfo->Modulation == MODULATION_AM && gSetting_AM_fix);
                     BK4819_SetFilterBandwidth(Bandwidth, true);
                 #else
                     BK4819_SetFilterBandwidth(Bandwidth, false);
@@ -1153,7 +1160,7 @@ void RADIO_SetModulation(ModulationMode_t modulation)
                 BK4819_WriteRegister(0x55, 0x31a9);
             #endif
 
-            BK4819_SetFilterBandwidth(BK4819_FILTER_BW_AM, true);
+            BK4819_SetFilterBandwidth(gRxVfo->CHANNEL_BANDWIDTH, true);
             break;
         }
 
@@ -1206,6 +1213,14 @@ void RADIO_SetupAGC(bool listeningAM, bool disable)
 
     BK4819_SetAGC(!disable);
     BK4819_InitAGC(listeningAM);
+
+    // Reapply user LNA/LNAS values after InitAGC overwrites REG_13
+    {
+        uint16_t reg = BK4819_ReadRegister(BK4819_REG_13);
+        reg = (reg & ~(0x7u << 5)) | ((gLnaGain  & 0x7u) << 5);
+        reg = (reg & ~(0x3u << 8)) | ((gLnaSGain & 0x3u) << 8);
+        BK4819_WriteRegister(BK4819_REG_13, reg);
+    }
 }
 
 void RADIO_SetVfoState(VfoState_t State)

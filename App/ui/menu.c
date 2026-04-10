@@ -54,9 +54,7 @@ const t_menu_item MenuList[] =
     {"TxODir",      MENU_SFT_D         }, // was "SFT_D"
     {"TxOffs",      MENU_OFFSET        }, // was "OFFSET"
     {"W/N",         MENU_W_N           },
-#ifndef ENABLE_FEAT_F4HWN
     {"Scramb",      MENU_SCR           }, // was "SCR"
-#endif
     {"BusyCL",      MENU_BCL           }, // was "BCL"
     {"Compnd",      MENU_COMPAND       },
     {"Mode",        MENU_AM            }, // was "AM"
@@ -137,6 +135,7 @@ const t_menu_item MenuList[] =
 #endif
     {"RxMode",      MENU_TDR           },
     {"Sql",         MENU_SQL           },
+    {"UpConv",      MENU_UPCONV        },
 #ifdef ENABLE_FEAT_F4HWN
     {"SetPwr",      MENU_SET_PWR       },
     {"SetPTT",      MENU_SET_PTT       },
@@ -176,9 +175,7 @@ const t_menu_item MenuList[] =
     {"Tx 500",      MENU_500TX         }, // was "500TX"
 #endif
     {"350 En",      MENU_350EN         }, // was "350EN"
-#ifndef ENABLE_FEAT_F4HWN
     {"ScraEn",      MENU_SCREN         }, // was "SCREN"
-#endif
 #ifdef ENABLE_F_CAL_MENU
     {"FrCali",      MENU_F_CALI        }, // reference xtal calibration
 #endif
@@ -221,6 +218,13 @@ const char gSubMenu_OFF_ON[][4] =
 {
     "OFF",
     "ON"
+};
+
+const char gSubMenu_UPCONV[][7] =
+{
+    "OFF",
+    "100MHz",
+    "125MHz"
 };
 
 const char gSubMenu_NA[4] =
@@ -357,7 +361,6 @@ const char gSubMenu_SET_NAV[][17] =
     "UP\nDOWN\nUV-K5(8)",
 };
 
-#ifndef ENABLE_FEAT_F4HWN
 const char gSubMenu_SCRAMBLER[][7] =
 {
     "OFF",
@@ -372,7 +375,6 @@ const char gSubMenu_SCRAMBLER[][7] =
     "3400Hz",
     "3500Hz"
 };
-#endif
 
 #ifdef ENABLE_FEAT_F4HWN
     const char gSubMenu_SET_PWR[][6] =
@@ -650,6 +652,10 @@ void UI_DisplayMenu(void)
             sprintf(String, "%d", gSubMenuSelection);
             break;
 
+        case MENU_UPCONV:
+            strcpy(String, gSubMenu_UPCONV[gSubMenuSelection]);
+            break;
+
         case MENU_MIC:
             {   // display the mic gain in actual dB rather than just an index number
                 const uint8_t mic = gMicGain_dB2[gSubMenuSelection];
@@ -731,7 +737,6 @@ void UI_DisplayMenu(void)
             strcpy(String, gSubMenu_W_N[gSubMenuSelection]);
             break;
 
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCR:
             strcpy(String, gSubMenu_SCRAMBLER[gSubMenuSelection]);
             #if 1
@@ -741,7 +746,6 @@ void UI_DisplayMenu(void)
                     BK4819_DisableScramble();
             #endif
             break;
-#endif
 
         case MENU_VOX:
             #ifdef ENABLE_VOX
@@ -832,9 +836,7 @@ void UI_DisplayMenu(void)
         case MENU_500TX:
 #endif
         case MENU_350EN:
-#ifndef ENABLE_FEAT_F4HWN
         case MENU_SCREN:
-#endif
 #ifdef ENABLE_FEAT_F4HWN
         case MENU_SET_TMR:
         case MENU_S_PRI:
