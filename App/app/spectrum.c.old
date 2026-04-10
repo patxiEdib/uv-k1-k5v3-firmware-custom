@@ -448,8 +448,6 @@ static void DeInitSpectrum()
     SetF(initialFreq);
     RestoreRegisters();
     isInitialized = false;
-	menuState = 0;
-	gainMenuMode  = false;
 }
 
 uint8_t GetBWRegValueForScan()
@@ -521,7 +519,9 @@ static void ToggleRX(bool on)
     }
     else
     {
-        BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+        // In STILL mode keep listen BW to avoid audio glitches when signal drops
+        if (currentState != STILL)
+            BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     }
 }
 
@@ -772,7 +772,6 @@ static void ToggleListeningBW()
     {
         settings.listenBw++;
     }
-	BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
     redrawScreen = true;
 }
 
@@ -1364,13 +1363,14 @@ void OnKeyDownStill(KEY_Code_t key)
     case KEY_EXIT:
         if (!menuState)
         {
+            if (gainMenuMode) {
+                DeInitSpectrum();
+                break;
+            }
             SetState(SPECTRUM);
             lockAGC = false;
             monitorMode = false;
             RelaunchScan();
-			if (gainMenuMode) {
-                DeInitSpectrum();
-            }
             break;
         }
         menuState = 0;
@@ -1632,9 +1632,9 @@ static void UpdateListening()
 
     if (currentState == SPECTRUM)
     {
-        //BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+        BK4819_WriteRegister(0x43, GetBWRegValueForScan());
         Measure();
-        //BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+        BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
     }
     else
     {
@@ -1674,7 +1674,8 @@ static void Tick()
     {
         gNextTimeslice = false;
 #ifdef ENABLE_AM_FIX
-        if (settings.modulationType == MODULATION_AM && !lockAGC)
+        if (settings.modulationType == MODULATION_AM && !lockAGC
+            && gSetting_AM_fix && currentState != STILL)
         {
             AM_fix_10ms(vfo); // allow AM_Fix to apply its AGC action
         }
@@ -1863,7 +1864,7 @@ void APP_RunGainMenu()
         gLnaSGain = (reg >> 8) & 0x3;
     }
 
-    //gainMenuMode = false;
+    gainMenuMode = false;
 
     // Wait for EXIT key to be released so the main system doesn't see it
     while (KEYBOARD_GetKey() != KEY_INVALID)

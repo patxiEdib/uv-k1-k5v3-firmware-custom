@@ -767,6 +767,12 @@ void RADIO_SelectVfos(void)
     RADIO_SelectCurrentVfo();
 }
 
+BK4819_FilterBandwidth_t RADIO_GetAMFilterBandwidth(const VFO_Info_t *pVfo)
+{
+    // On BK4829, AM "wide" intentionally reuses the wider RF filter preset.
+    return (pVfo->CHANNEL_BANDWIDTH == BANDWIDTH_WIDE) ? BK4819_FILTER_BW_WIDE : BK4819_FILTER_BW_AM;
+}
+
 void RADIO_SetupRegisters(bool switchToForeground)
 {
     BK4819_FilterBandwidth_t Bandwidth = gRxVfo->CHANNEL_BANDWIDTH;
@@ -785,19 +791,7 @@ void RADIO_SetupRegisters(bool switchToForeground)
     BK4819_ToggleGpioOut(BK4819_GPIO6_PIN2_GREEN, false);
 
     if (gRxVfo->Modulation == MODULATION_AM)
-    {
-        switch (Bandwidth)
-        {
-            default:
-                Bandwidth = BK4819_FILTER_BW_WIDE;
-                [[fallthrough]];
-            case BK4819_FILTER_BW_WIDE:
-            case BK4819_FILTER_BW_NARROW:
-            case BK4819_FILTER_BW_NARROWER:
-                BK4819_SetFilterBandwidth(Bandwidth, true);
-                break;
-        }
-    }
+        BK4819_SetFilterBandwidth(RADIO_GetAMFilterBandwidth(gRxVfo), true);
     else
     {
         switch (Bandwidth)
@@ -809,6 +803,7 @@ void RADIO_SetupRegisters(bool switchToForeground)
             case BK4819_FILTER_BW_NARROW:
             case BK4819_FILTER_BW_NARROWER:
                 #ifdef ENABLE_AM_FIX
+    //              BK4819_SetFilterBandwidth(Bandwidth, gRxVfo->Modulation == MODULATION_AM && gSetting_AM_fix);
                     BK4819_SetFilterBandwidth(Bandwidth, true);
                 #else
                     BK4819_SetFilterBandwidth(Bandwidth, false);
@@ -1160,7 +1155,7 @@ void RADIO_SetModulation(ModulationMode_t modulation)
                 BK4819_WriteRegister(0x55, 0x31a9);
             #endif
 
-            BK4819_SetFilterBandwidth(gRxVfo->CHANNEL_BANDWIDTH, true);
+            BK4819_SetFilterBandwidth(RADIO_GetAMFilterBandwidth(gCurrentVfo), true);
             break;
         }
 
