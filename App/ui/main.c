@@ -852,7 +852,7 @@ void UI_DisplayMain(void)
 
         // Upconverter display offset: subtract converter frequency from display only
         if (gUpconverter > 0) {
-            const uint32_t upconv_offset = (gUpconverter == 1) ? 10000000u : 12500000u;
+            const uint32_t upconv_offset = (gUpconverter == 1) ? 10000000u : (gUpconverter == 2) ? 11000000u : 12500000u;
             if (frequency >= upconv_offset)
                 frequency -= upconv_offset;
         }

@@ -120,7 +120,7 @@ int MENU_GetLimits(uint8_t menu_id, int32_t *pMin, int32_t *pMax)
             break;
 
         case MENU_UPCONV:
-            *pMax = 2;
+            *pMax = 3;
             break;
 
         case MENU_STEP:

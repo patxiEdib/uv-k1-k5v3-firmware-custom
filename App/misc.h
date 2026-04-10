@@ -471,7 +471,7 @@ void FUNCTION_NOP();
 extern uint8_t gLnaGain;   // LNA gain index 0-7, default 2 (-14dB)
 extern uint8_t gLnaSGain;  // LNAS gain index 0-3, default 3 (0dB)
 
-extern uint8_t gUpconverter;  // 0=OFF, 1=100MHz, 2=125MHz
+extern uint8_t gUpconverter;  // 0=OFF, 1=100MHz, 2=110MHz, 3=125MHz
 
 static inline bool SerialConfigInProgress() { return gSerialConfigCountDown_500ms != 0; }
 

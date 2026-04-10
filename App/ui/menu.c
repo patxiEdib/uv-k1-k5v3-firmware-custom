@@ -224,6 +224,7 @@ const char gSubMenu_UPCONV[][7] =
 {
     "OFF",
     "100MHz",
+	"110MHz",
     "125MHz"
 };
 
