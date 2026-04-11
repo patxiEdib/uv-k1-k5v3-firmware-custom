@@ -211,6 +211,11 @@ static void SetRegMenuValue(uint8_t st, bool add)
     // mask in spec
     reg &= ~(s.mask << s.offset);
     BK4819_WriteRegister(s.num, reg | (v << s.offset));
+	
+	reg = BK4819_ReadRegister(BK4819_REG_13);
+    gLnaGain  = (reg >> 5) & 0x7;
+    gLnaSGain = (reg >> 8) & 0x3;
+	
     redrawScreen = true;
 }
 
@@ -512,7 +517,8 @@ static void ToggleRX(bool on)
     {
     #ifdef ENABLE_FEAT_F4HWN_SPECTRUM
         listenT = 100;
-        BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+		BK4819_SetFilterBandwidth(settings.listenBw, false);
+        //BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
         setTailFoundInterrupt();
     #else
         listenT = 1000;
@@ -521,7 +527,8 @@ static void ToggleRX(bool on)
     }
     else
     {
-        BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+		BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROWER, false);
+        //BK4819_WriteRegister(0x43, GetBWRegValueForScan());
     }
 }
 
@@ -772,7 +779,8 @@ static void ToggleListeningBW()
     {
         settings.listenBw++;
     }
-	BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+	BK4819_SetFilterBandwidth(settings.listenBw, false);
+	//BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
     redrawScreen = true;
 }
 
@@ -1633,8 +1641,10 @@ static void UpdateListening()
     if (currentState == SPECTRUM)
     {
         //BK4819_WriteRegister(0x43, GetBWRegValueForScan());
+		//BK4819_SetFilterBandwidth(BK4819_FILTER_BW_NARROWER, false);
         Measure();
         //BK4819_WriteRegister(0x43, listenBWRegValues[settings.listenBw]);
+		//BK4819_SetFilterBandwidth(settings.listenBw, false);
     }
     else
     {
