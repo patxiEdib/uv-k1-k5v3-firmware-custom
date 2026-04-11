@@ -951,11 +951,7 @@ void SETTINGS_SaveSettings(void)
     State[4]  = gSetting_500TX;
 #endif
     State[5]  = gSetting_350EN;
-#ifdef ENABLE_FEAT_F4HWN
-    State[6]  = false;
-#else
     State[6]  = gSetting_ScrambleEnable;
-#endif
 
     //if (!gSetting_TX_EN)             State[7] &= ~(1u << 0);
     if (!gSetting_live_DTMF_decoder) State[7] &= ~(1u << 1);
@@ -1074,11 +1070,7 @@ void SETTINGS_SaveChannel(uint16_t Channel, uint8_t VFO, const VFO_Info_t *pVFO,
 #endif
         ;
         State -> _8[6] =  pVFO->STEP_SETTING;
-#ifdef ENABLE_FEAT_F4HWN
-        State -> _8[7] =  0;
-#else
-        State -> _8[7] =  pVFO->SCRAMBLING_TYPE;
-#endif
+		State -> _8[7] =  pVFO->SCRAMBLING_TYPE;
 
         PY25Q16_WriteBuffer(OffsetVFO, Buf, 0x10, false);
 

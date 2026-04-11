@@ -680,7 +680,7 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
             }
             break;
 
-        /*
+        
         case BK4819_FILTER_BW_AM:   // 8.33kHz
             if (weak_no_different) {
                 // make the RX bandwidth the same with weak signals
@@ -690,7 +690,7 @@ void BK4819_SetFilterBandwidth(const BK4819_FilterBandwidth_t Bandwidth, const b
                 val = 0x4458;
             }
             break;
-        */
+        
     }
 
     BK4819_WriteRegister(BK4819_REG_43, val);
@@ -876,7 +876,7 @@ void BK4819_PickRXFilterPathBasedOnFrequency(uint32_t Frequency)
         BK4819_ToggleGpioOut(BK4819_GPIO3_PIN31_UHF_LNA, true);
     }
 }
-
+/*
 void BK4819_DisableScramble(void)
 {
     const uint16_t Value = BK4819_ReadRegister(BK4819_REG_31);
@@ -889,6 +889,24 @@ void BK4819_EnableScramble(uint8_t Type)
     BK4819_WriteRegister(BK4819_REG_31, Value | (1u << 1));
 
     BK4819_WriteRegister(BK4819_REG_71, 0x68DC + (Type * 1032));   // 0110 1000 1101 1100
+}
+*/
+void BK4819_DisableScramble(void)
+{
+    const uint16_t Value = BK4819_ReadRegister(BK4819_REG_31);
+    BK4819_WriteRegister(BK4819_REG_31, Value & ~(1u << 1));
+    BK4819_WriteRegister(BK4819_REG_2B, 0);
+}
+
+void BK4819_EnableScramble(uint8_t Type)
+{
+    uint16_t Value = BK4819_ReadRegister(BK4819_REG_31);
+    BK4819_WriteRegister(BK4819_REG_31, Value | (1u << 1));
+
+    BK4819_WriteRegister(BK4819_REG_71, 0x68DC + (Type * 1032));   // 0110 1000 1101 1100
+
+    Value = BK4819_ReadRegister(BK4819_REG_2B);
+    BK4819_WriteRegister(BK4819_REG_2B, Value | 1);
 }
 
 bool BK4819_CompanderEnabled(void)
